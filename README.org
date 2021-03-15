@@ -1,5 +1,65 @@
-pcall(require, "luarocks.loader")
+#+TITLE: AwesomeWM config
+#+AUTHOR: Tobias Zindl
+#+PROPERTY: header-args :tangle rc.lua
 
+#+CAPTION: Awesome Scrot #+ATTR_HTML: :alt Awesome Scrot :title Awesome Scrot :align left 
+[[file:screenshots/Screenshot_2021-03-14-32_1920x1080.png]]
+
+* Table of Content :toc:
+- [[#introduction][Introduction]]
+  - [[#needed-libaries][needed libaries]]
+  - [[#used-programs][used programs]]
+- [[#imports][Imports]]
+- [[#error-handling][Error handling]]
+- [[#variables-and-theming][Variables and Theming]]
+- [[#documentation-is-missing][Documentation is missing]]
+- [[#widgets][Widgets]]
+- [[#panel-wibox][Panel (Wibox)]]
+- [[#tag-handling][Tag handling]]
+- [[#rules][Rules]]
+- [[#signals][Signals]]
+- [[#autostart][Autostart]]
+
+* Introduction
+[[https://awesomewm.org/][Awesome]] is a dynamically tiling framework window manager for X11.
+
+This is the *awesome* configuration of Tobias Zindl (/zie/)
+My Github: [[https://github.com/zie87]]
+
+This config is based on the default *awesome* config. The original configuration was splitted into different submodules to make it easier to handle and is changed to fit my personal needs.
+
+To create the lua source code from this document press =Ctrl-C Ctrl-C= and then run =org-babel-tangle= inside of Emacs.
+
+** needed libaries
+
+Some Lua libaries needs to be installed on the system on [[https://archlinux.org/][Arch Linux]] you can install them with:
++ ~sudo pacman -S awesome awesome-freedesktop lain luarocks~. 
+I would also recommend to install [[https://github.com/serialoverflow/awmtt][awmtt]]. You can install it via /aur/: 
++ ~paru -S awmtt~
+
+** used programs
+
+The keybindungs start specific programs which are defined inside of the [[file:cfg/apps.org][apps module]]. If you want to use this configuration you should install this programs or change the default applications beforehand.
+
+You can install the default applications with:
++ ~sudo pacman -S kitty neovim emacs thunar dmenu rofi scrot pass light-locker~
++ ~paru -S librewolf-bin~
+
+* Imports
+
+If LuaRocks is installed, make sure that packages installed through it are found (e.g. lgi). If LuaRocks is not installed, do nothing.
+#+begin_src lua
+pcall(require, "luarocks.loader")
+#+end_src
+
+Include some standard headers:
++ awful :: basic utils (e.g. spawn)
++ gears :: basic utils (e.g. config dir)
++ wibox :: for widget and layouts handling
++ beautiful :: for theme handling
++ naugthy :: for notification
+
+#+begin_src lua
 local gears = require("gears")
 local awful = require("awful")
 require("awful.autofocus")
@@ -8,16 +68,29 @@ local wibox = require("wibox")
 local beautiful = require("beautiful")
 local naughty = require("naughty")
 local menubar = require("menubar")
+#+end_src
 
+The following lines enables the hotkey popup for other registered apps like Vim or tmux
+#+begin_src lua
 local hotkeys_popup = require("awful.hotkeys_popup")
 require("awful.hotkeys_popup.keys")
+#+end_src
 
+* Error handling
+
+This checks for errors on startup. If an error occurs it falls back to the default config.
+#+begin_src lua
 if awesome.startup_errors then
     naughty.notify({ preset = naughty.config.presets.critical,
                      title = "Oops, there were errors during startup!",
                      text = awesome.startup_errors })
 end
+#+end_src
 
+#+RESULTS:
+
+This checks for runtime errors.
+#+begin_src lua
 do
     local in_error = false
     awesome.connect_signal("debug::error", function (err)
@@ -30,7 +103,13 @@ do
         in_error = false
     end)
 end
+#+end_src
 
+* Variables and Theming
+
+The following lines will import self defined modules ([[file:cfg/apps.org][apps]] and [[file:cfg/keys.org][keys]]) and make them availible inside this source module. It also propagates the default terminal for the window manager. *beautiful* is initialized with my own theme [[file:themes/zie_arrow/README.org][zie_arrow]].
+
+#+begin_src lua
 local apps = require('cfg.apps')
 awful.util.terminal = apps.default.terminal
 local keys = require('cfg.keys')
@@ -40,7 +119,9 @@ local config_dir =  gears.filesystem.get_configuration_dir()
 
 beautiful.init(config_dir .. "themes/zie_arrow/theme.lua")
 beautiful.wallpaper = config_dir .. "background/wallpaper_02.png"
-
+#+end_src
+* TODO Documentation is missing
+#+begin_src lua
 -- Table of layouts to cover with awful.layout.inc, order matters.
 awful.layout.layouts = {
     awful.layout.suit.tile,
@@ -121,7 +202,9 @@ end
 
 -- Re-set wallpaper when a screen's geometry changes (e.g. different resolution)
 screen.connect_signal("property::geometry", set_wallpaper)
-
+#+end_src
+* TODO Widgets
+#+begin_src lua
 local markup     = require("lain").util.markup
 local separators = require("lain").util.separators
 local widgets    = require("lain").widget
@@ -202,7 +285,9 @@ local net = widgets.net({
                           markup(beautiful.purple, " " .. string.format("%06.1f", net_now.sent) .. " ")))
     end
 })
-
+#+end_src
+* TODO Panel (Wibox)
+#+begin_src lua
 -- utils
 local spacer  = wibox.widget.textbox(' ')
 local arrow_dl = separators.arrow_left(beautiful.bg_focus, "alpha")
@@ -292,6 +377,10 @@ root.buttons(gears.table.join(
 ))
 -- }}}
 
+
+#+end_src
+* TODO Tag handling
+#+begin_src lua
 globalkeys = keys.global
 clientkeys = keys.client
 
@@ -362,7 +451,9 @@ clientbuttons = gears.table.join(
 -- Set keys
 root.keys(globalkeys)
 -- }}}
-
+#+end_src
+* TODO Rules
+#+begin_src lua
 -- {{{ Rules
 -- Rules to apply to new clients (through the "manage" signal).
 awful.rules.rules = {
@@ -408,6 +499,9 @@ awful.rules.rules = {
 }
 -- }}}
 
+#+end_src
+* TODO Signals
+#+begin_src lua
 -- {{{ Signals
 -- Signal function to execute when a new client appears.
 client.connect_signal("manage", function (c)
@@ -432,6 +526,9 @@ client.connect_signal("focus", function(c) c.border_color = beautiful.border_foc
 client.connect_signal("unfocus", function(c) c.border_color = beautiful.border_normal end)
 -- }}}
 
+#+end_src
+* TODO Autostart
+#+begin_src lua
 -- autorun programs
 
 local autorun_apps = apps.run_on_start_up
@@ -439,3 +536,5 @@ local autorun_apps = apps.run_on_start_up
 for app = 1, #autorun_apps do
     awful.spawn.single_instance(autorun_apps[app])
 end
+
+#+end_src
